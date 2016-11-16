@@ -25,7 +25,7 @@ MongoClient.connect('mongodb://localhost:27017/TodoApp', (error, database) => {
         console.log(`Users count: ${count}`);
     }, (error) => {
         console.log('unable to read the count of users.')
-    })
+    });
 
     database.close();
     console.log('Connection closed!');
