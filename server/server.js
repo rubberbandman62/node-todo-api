@@ -25,18 +25,18 @@ app.post('/todos', (req, res) => {
     }, (err) => {
         // console.log('Todo could not be saved:', err);
         res.status(400).send(err)
-    })
-})
+    });
+});
 
 app.get('/todos', (req, res) => {
     // console.log(req.body);
     Todo.find().then((todos) => {
         res.send({todos});
     }, (err) => {
-        console.log('Error while fetching all todos.', err);
+        console.log('Error while fetching all the todos.', err);
         res.status(400).send(e);
-    })
-})
+    });
+});
 
 app.post('/users', (req, res) => {
     // console.log(req.body);
@@ -50,11 +50,11 @@ app.post('/users', (req, res) => {
     }, (err) => {
         // console.log('User could not be saved:', err);
         res.status(400).send(err)
-    })
-})
+    });
+});
 
 app.listen(port, () => {
     console.log(`Started server on port ${port}`);
-})
+});
 
 module.exports = {app};
