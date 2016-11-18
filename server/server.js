@@ -28,6 +28,16 @@ app.post('/todos', (req, res) => {
     })
 })
 
+app.get('/todos', (req, res) => {
+    // console.log(req.body);
+    Todo.find().then((todos) => {
+        res.send({todos});
+    }, (err) => {
+        console.log('Error while fetching all todos.', err);
+        res.status(400).send(e);
+    })
+})
+
 app.post('/users', (req, res) => {
     // console.log(req.body);
     var newUser = new User({
