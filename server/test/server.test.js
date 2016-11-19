@@ -133,12 +133,36 @@ describe('DELETE /todos/:id', () => {
             .delete(`/todos/${id}`)
             .expect(404)
             .end(done)
-    })
+    });
 
     it(`should return a 400 if the id is invalid`, (done) => {
         request(app)
             .delete(`/todos/123`)
             .expect(400)
             .end(done)
-    })
+    });
+});
+
+describe('PATCH /todos/:id', () => {
+    it('should update just the text', (done) => {
+        var id = todos[1]._id;
+        var text = "Just another todo instead second todo";
+
+        request(app)
+            .patch(`/todos/${id}`)
+            .send({text})
+            .expect(200)
+            .expect((res) => {
+                expect(res.body.todo.text).toBe(text);
+            })
+            .end((err, res) => {
+                Todo.findById(id)
+                    .then((todo) => {
+                        expect(todo).toExist();
+                        expect(todo.text).toBe(text);
+                        done();
+                    })
+                    .catch((err) => done(err));
+            });
+    });
 });
