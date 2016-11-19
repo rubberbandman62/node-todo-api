@@ -38,6 +38,19 @@ app.get('/todos', (req, res) => {
     });
 });
 
+app.get('/todos/:id', (req, res) => {
+    var id = req.params.id;
+    Todo.findById(id).then((todo) => {
+        if (todo) {
+            res.send({todo});
+        } else {
+            res.status(404).send({message: "Todo not found!"});
+        }
+    }).catch((error) => {
+        res.status(400).send(error);
+    })
+})
+
 app.post('/users', (req, res) => {
     // console.log(req.body);
     var newUser = new User({
