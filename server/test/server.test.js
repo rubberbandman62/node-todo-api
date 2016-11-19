@@ -61,7 +61,7 @@ describe('POST /todos', () => {
                         done();
                     })
                     .catch(err => done(err));
-            })
+            });
     });
 });
 
@@ -74,7 +74,7 @@ describe('GET /todos', () => {
                 expect(res.body.todos.length).toBe(2);
             })
             .end(done);
-    })
+    });
 });
 
 describe('GET /todos/:id', () => {
@@ -86,19 +86,32 @@ describe('GET /todos/:id', () => {
                 expect(res.body.todo.text).toEqual(todos[0].text)
             })
             .end(done);
-    })
+    });
 
     it(`should return an http code of 404 if the todo cannot be found`, (done) => {
         request(app)
             .get(`/todos/${new ObjectID(999)}`)
             .expect(404)
             .end(done);
-    })
+    });
 
     it(`should return an http code of 400 if the id is invalid`, (done) => {
         request(app)
             .get(`/todos/123`)
             .expect(400)
             .end(done);
-    })
+    });
+});
+
+describe('DELETE /todos/:id', () => {
+    it(`should remove one todo`, (done) => {
+        var text = todos[0].text;
+        request(app)
+            .delete(`/todos/${todos[0]._id}`)
+            .expect(200)
+            .expect((res) => {
+                expect(res.body.todo.text).toBe(text);
+            })
+            .end(done);
+    });
 });
