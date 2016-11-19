@@ -1,5 +1,6 @@
 var express = require('express');
 var bodyParser = require('body-parser');
+var {ObjectID} = require('mongodb');
 
 var {mongoose} = require('./db/mongoose');
 var {User} = require('./schemas/user');
@@ -53,16 +54,21 @@ app.get('/todos/:id', (req, res) => {
 })
 
 app.delete('/todos/:id', (req, res) => {
-   var id = req.params.id;
-   Todo.findByIdAndRemove(id).then((todo) => {
-       if(!todo) {
-           res.status(404).send();
-       }
+    var id = req.params.id;
 
-       res.send({todo});
-   }).catch((error) => {
-       res.status(400).send(error);
-   })
+    if (!ObjectID.isValid(id)) {
+        return res.status(400).send();
+    }
+
+    Todo.findByIdAndRemove(id).then((todo) => {
+        if (!todo) {
+            return res.status(404).send();
+        }
+
+        res.send({todo});
+    }, (error) => {
+        res.status(400).send(error);
+    })
 });
 
 app.post('/users', (req, res) => {
