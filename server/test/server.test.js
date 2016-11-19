@@ -1,12 +1,15 @@
 const expect = require('expect');
 const request = require('supertest');
+const {ObjectID} = require('mongodb');
 
 var {app} = require('../server');
 var {Todo} = require('../schemas/todo');
 
 const todos = [{
+    _id: new ObjectID(101),
     text: "first todo"
 }, {
+    _id: new ObjectID(102),
     text: "second todo"
 }]
 
@@ -28,7 +31,7 @@ describe('POST /todos', () => {
                 expect(res.body.text).toBe(text)
             })
             .end((err, res) => {
-                if(err) {
+                if (err) {
                     return done(err);
                 }
 
@@ -48,7 +51,7 @@ describe('POST /todos', () => {
             .send({text: ''})
             .expect(400)
             .end((err, res) => {
-                if(err) {
+                if (err) {
                     return done(err);
                 }
 
@@ -68,8 +71,34 @@ describe('GET /todos', () => {
             .get('/todos')
             .expect(200)
             .expect((res) => {
-                expect(res.body.todos.length).toBe(2)
+                expect(res.body.todos.length).toBe(2);
             })
             .end(done);
     })
-})
+});
+
+describe('GET /todos/:id', () => {
+    it(`should return one todo`, (done) => {
+        request(app)
+            .get(`/todos/${todos[0]._id}`)
+            .expect(200)
+            .expect((res) => {
+                expect(res.body.todo.text).toEqual(todos[0].text)
+            })
+            .end(done);
+    })
+
+    it(`should return an http code of 404 if the todo cannot be found`, (done) => {
+        request(app)
+            .get(`/todos/${new ObjectID(999)}`)
+            .expect(404)
+            .end(done);
+    })
+
+    it(`should return an http code of 400 if the id is invalid`, (done) => {
+        request(app)
+            .get(`/todos/123`)
+            .expect(400)
+            .end(done);
+    })
+});
