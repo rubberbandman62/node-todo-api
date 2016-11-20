@@ -8,6 +8,7 @@ const {ObjectID} = require('mongodb');
 var {mongoose} = require('./db/mongoose');
 var {User} = require('./schemas/user');
 var {Todo} = require('./schemas/todo');
+var {authenticate} = require('./middleware/authenticate');
 
 const port = process.env.PORT;
 
@@ -105,14 +106,16 @@ app.post('/users', (req, res) => {
     var body = _.pick(req.body, ['email', 'password']);
     var newUser = new User(body);
 
-    newUser.save().then(() => {
-        return newUser.generateAuthToken();
-    }).then((token) => {
-        res.header('x_auth', token).send(newUser);
-    }).catch((err) => {
-        // console.log('User could not be saved:', err);
-        res.status(400).send(err)
-    });
+    newUser.generateAuthTokenAndSave().then((token) => {
+        res.header('x-auth', token).send(newUser);
+    }).catch((error) => {
+        res.status(400).send(error);
+    })
+
+});
+
+app.get('/users/me', authenticate, (req, res) => {
+    res.send(req.user);
 });
 
 app.get('/users', (req, res) => {
