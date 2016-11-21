@@ -1,23 +1,14 @@
 const expect = require('expect');
 const request = require('supertest');
-const {ObjectID} = require('mongodb');
+const {ObjectId} = require('mongodb');
 
 var {app} = require('../server');
 var {Todo} = require('../schemas/todo');
+var {User} = require('../schemas/user');
+var {todos, populateTodos, users, populateUsers} = require('./seed/seed');
 
-const todos = [{
-    _id: new ObjectID(),
-    text: "first todo"
-}, {
-    _id: new ObjectID(),
-    text: "second todo"
-}]
-
-beforeEach((done) => {
-    Todo.remove({}).then(() => {
-        Todo.insertMany(todos);
-    }).then(() => done());
-})
+beforeEach(populateUsers);
+beforeEach(populateTodos);
 
 describe('POST /todos', () => {
     it('should insert a todo into the database', (done) => {
@@ -90,7 +81,7 @@ describe('GET /todos/:id', () => {
 
     it(`should return an http code of 404 if the todo cannot be found`, (done) => {
         request(app)
-            .get(`/todos/${new ObjectID(999)}`)
+            .get(`/todos/${new ObjectId(999)}`)
             .expect(404)
             .end(done);
     });
@@ -128,7 +119,7 @@ describe('DELETE /todos/:id', () => {
     });
 
     it(`should return a 404 if the todo is not found`, (done) => {
-        var id = new ObjectID();
+        var id = new ObjectId();
         request(app)
             .delete(`/todos/${id}`)
             .expect(404)
@@ -218,4 +209,92 @@ describe('PATCH /todos/:id', () => {
                     .catch((err) => done(err));
             });
     })
+});
+
+describe('GET /users/me', () => {
+    it('should return user if authenticated', (done) => {
+        request(app)
+            .get('/users/me')
+            .set('x-auth', users[0].tokens[0].token)
+            .expect(200)
+            .expect((res) => {
+                expect(res.body.user).toExist();
+                expect(res.body.user._id).toBe(users[0]._id.toHexString());
+                expect(res.body.user.email).toBe(users[0].email);
+            })
+            .end(done);
+    });
+
+    it('should return 401 if not authenticated', (done) => {
+        request(app)
+            .get('/users/me')
+            .expect(401)
+            .expect((res) => {
+                expect(res.body.user).toNotExist();
+            })
+            .end(done)
+    });
+});
+
+describe('POST /users', () => {
+    it('should create a user', (done) => {
+        var email = 'some@any.de';
+        var password = 'abcdef';
+
+        request(app)
+            .post('/users')
+            .send({email, password})
+            .expect(200)
+            .expect((res) => {
+                expect(res.get('x-auth')).toExist();
+                expect(res.body.user._id).toExist();
+                expect(res.body.user.email).toBe(email);
+                expect(res.body.user.password).toNotBe(password);
+            })
+            .end((error) => {
+                if (error) {
+                    return done(error);
+                }
+
+                User.findOne({email}).then((user) => {
+                    expect(user).toExist();
+                    expect(user.email).toBe(email);
+                    expect(user.password).toNotBe(password);
+                    done();
+                });
+            });
+    });
+
+    it('should return validation errors if the eamil is invalid', (done) => {
+        request(app)
+            .post('/users')
+            .send({
+                email: 'next@web.de',
+                password: 'abcde'
+            })
+            .expect(400)
+            .end(done);
+    });
+
+    it('should return validation errors if the pasword is invalid', (done) => {
+        request(app)
+            .post('/users')
+            .send({
+                email: 'nextweb.de',
+                password: 'abcdef'
+            })
+            .expect(400)
+            .end(done);
+    });
+
+    it('should not create a user if email is in user', (done) => {
+        request(app)
+            .post('/users')
+            .send({
+                email: users[0].email,
+                password: users[0].password
+            })
+            .expect(400)
+            .end(done);
+    });
 });
