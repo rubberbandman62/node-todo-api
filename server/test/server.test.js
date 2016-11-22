@@ -261,7 +261,7 @@ describe('POST /users', () => {
                     expect(user.email).toBe(email);
                     expect(user.password).toNotBe(password);
                     done();
-                });
+                }).catch((error) => done(error));
             });
     });
 
@@ -287,7 +287,7 @@ describe('POST /users', () => {
             .end(done);
     });
 
-    it('should not create a user if email is in user', (done) => {
+    it('should not create a user if email is in use', (done) => {
         request(app)
             .post('/users')
             .send({
@@ -297,4 +297,57 @@ describe('POST /users', () => {
             .expect(400)
             .end(done);
     });
+
 });
+
+describe('POST users/login', () => {
+    it('should accept email and password and respone with a token', (done) => {
+        request(app)
+            .post('/users/login')
+            .send({
+                email: users[0].email,
+                password: users[0].password
+            })
+            .expect(200)
+            .expect((res) => {
+                expect(res.get('x-auth')).toExist();
+            })
+            .end((error, res) => {
+                if (error) {
+                    return done(error);
+                }
+                User.findOne({email: users[0].email}).then((user) => {
+                    expect(user).toExist();
+                    expect(user.tokens[1]).toExist();
+                    expect(user.tokens[1]).toInclude({
+                        access: 'auth',
+                        token: res.headers['x-auth']
+                    });
+                    done();
+                }).catch((error) => done(error));
+            })
+    });
+
+    it('should reject invalid emails or password with a 401', (done) => {
+        request(app)
+            .post('/users/login')
+            .send({
+                email: users[1].email,
+                password: users[1].password + 'a'
+            })
+            .expect(401)
+            .expect((res) => {
+                expect(res.get('x-auth')).toNotExist();
+            })
+            .end((error, res) => {
+                if (error) {
+                    return done(error);
+                }
+                User.findOne({email: users[1].email}).then((user) => {
+                    expect(user).toExist();
+                    expect(user.tokens.length).toBe(0);
+                    done();
+                }).catch((error) => done(error));
+            })
+    })
+})
