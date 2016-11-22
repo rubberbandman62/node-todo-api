@@ -4,6 +4,7 @@ const _ = require('lodash');
 const express = require('express');
 const bodyParser = require('body-parser');
 const {ObjectID} = require('mongodb');
+const bcrypt = require('bcryptjs');
 
 var {mongoose} = require('./db/mongoose');
 var {User} = require('./schemas/user');
@@ -124,7 +125,20 @@ app.get('/users', (req, res) => {
     }).catch((error) => {
         res.status(400).send(error);
     })
-})
+});
+
+app.post('/users/login', (req, res) => {
+    var {email, password} = req.body;
+
+    User.findByCredentials(email, password).then((user) => {
+        return user.generateAuthTokenAndSave().then((token) => {
+            res.set('x-auth', token).send();
+        })
+    }).catch((err) => {
+        return res.status(401).send();
+    })
+
+});
 
 app.listen(port, () => {
     console.log(`Started server on port ${port}`);
