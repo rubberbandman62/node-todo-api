@@ -4,7 +4,7 @@ const jwt = require('jsonwebtoken');
 const {Todo} = require('../../schemas/todo');
 const {User} = require('../../schemas/user');
 
-const privateKey = '123abc';
+const privateKey = process.env.JWT_SECRET;
 
 const userOneID = new ObjectID();
 const userTwoID = new ObjectID();
